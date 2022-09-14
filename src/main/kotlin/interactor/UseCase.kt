@@ -3,23 +3,19 @@ package interactor
 import it.czerwinski.kotlin.util.Either
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-abstract class UseCase<in T, R> {
+abstract class UseCase<in T, out R> {
 
-    private val job = SupervisorJob()
-    private val coroutineContext = job + Dispatchers.Default
+    private val coroutineContext = Dispatchers.Default + Job()
     private val coroutineScope = CoroutineScope(coroutineContext)
 
-    abstract fun execute(arg: T): Either<Exception, R>
+    abstract suspend fun execute(arg: T): Either<Exception, R>
 
-    operator fun invoke(
-        arg: T,
-        onResult: (Either<Exception, R>) -> Unit
-    ) {
+    operator fun invoke(arg: T, onException: (Exception) -> Unit, onResult: (R) -> Unit = {}) {
         coroutineScope.launch {
-            onResult(execute(arg))
+            execute(arg).fold(onException, onResult)
         }
     }
 }
