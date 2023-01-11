@@ -1,27 +1,42 @@
 package di
 
-import files.*
+import config.Configuration
+import file.*
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import sharing.SharingApi
-import sharing.SharingService
-import websocket.WebSocketApi
-import websocket.WebSocketClientService
-import websocket.WebSocketServerService
+import sharing.SharingViewModel
+import sharing.StartSharing
+import sharing.StopSharing
+import websocket.SocketClient
+import websocket.SocketServer
+import websocket.SocketService
 
-val appModule = module {
-    single { WebSocketClientService() } bind WebSocketApi.Client::class
-    single { WebSocketServerService() } bind WebSocketApi.Server::class
-    single { SharingService(get(), get()) } bind SharingApi::class
-    single { FileData(get()) } bind FileRepository::class
-    factory { ClearFiles(get()) }
-    factory { StartSharing(get()) }
-    factory { StopSharing(get()) }
-    factory { GetEvents(get()) }
-    factory { Refresh(get()) }
-    factory { SendFile(get()) }
+val socket = module {
     single {
-        FileViewModel(
+        SocketClient(
+            String.format(
+                SocketService.ADDRESS_PATTERN,
+                Configuration.SOCKET_HOSTNAME,
+                Configuration.SOCKET_PORT
+            )
+        )
+    } bind SocketService.Client::class
+    single { SocketServer(Configuration.SOCKET_HOSTNAME, Configuration.SOCKET_PORT) } bind SocketService.Server::class
+}
+
+val file = module {
+    single { FileService.Implementation(get()) } bind FileService::class
+    factory { ClearFiles(get()) }
+    factory { StartSharing(get(), get()) }
+    factory { StopSharing(get(), get()) }
+    factory { GetEvents(get()) }
+    factory { RefreshFiles(get()) }
+    factory { SendFile(get()) }
+}
+
+val sharing = module {
+    single {
+        SharingViewModel(
             get(),
             get(),
             get(),
@@ -31,3 +46,5 @@ val appModule = module {
         )
     }
 }
+
+val appModule = socket + file + sharing

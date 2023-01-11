@@ -12,10 +12,10 @@
 # AWS User-specific
 .idea/**/aws.xml
 
-# Generated files
+# Generated file
 .idea/**/contentModel.xml
 
-# Sensitive or high-churn files
+# Sensitive or high-churn file
 .idea/**/dataSources/
 .idea/**/dataSources.ids
 .idea/**/dataSources.local.xml
@@ -29,7 +29,7 @@
 .idea/**/libraries
 
 # Gradle and Maven with auto-import
-# When using Gradle or Maven with auto-import, you should exclude module files,
+# When using Gradle or Maven with auto-import, you should exclude module file,
 # since they will be recreated, and may cause churn.  Uncomment if using
 # auto-import.
 # .idea/artifacts
@@ -118,7 +118,7 @@ fabric.properties
 # Log file
 *.log
 
-# BlueJ files
+# BlueJ file
 *.ctxt
 
 # Mobile Tools for Java (J2ME)
@@ -142,7 +142,7 @@ replay_pid*
 
 # Log file
 
-# BlueJ files
+# BlueJ file
 
 # Mobile Tools for Java (J2ME)
 
@@ -158,7 +158,7 @@ replay_pid*
 # Ignore Gradle GUI config
 gradle-app.setting
 
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+# Avoid ignoring Gradle wrapper jar file (.jar file are usually ignored)
 !gradle-wrapper.jar
 
 # Avoid ignore Gradle wrappper properties
@@ -167,7 +167,7 @@ gradle-app.setting
 # Cache of project
 .gradletasknamecache
 
-# Eclipse Gradle plugin generated files
+# Eclipse Gradle plugin generated file
 # Eclipse Core
 .project
 # JDT-specific (Eclipse Java Development Tools)

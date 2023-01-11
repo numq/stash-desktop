@@ -22,9 +22,10 @@ fun UploadDialog(isMultiple: Boolean = false, onUpload: (File) -> Unit, onClose:
         ).apply {
             isMultipleMode = isMultiple
             isVisible = dialogVisibility
-        }) {
+        }
+    ) {
         try {
-            files.forEach(onUpload)
+            files.forEach { onUpload(it) }
         } catch (e: Exception) {
             println(e.localizedMessage)
         } finally {

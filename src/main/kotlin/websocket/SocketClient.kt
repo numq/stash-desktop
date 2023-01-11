@@ -1,7 +1,9 @@
 package websocket
 
 import extension.isSocketMessage
-import extension.webSocketMessage
+import extension.message
+import it.czerwinski.kotlin.util.Left
+import it.czerwinski.kotlin.util.Right
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -9,44 +11,37 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
-import java.net.DatagramSocket
-import java.net.DatagramSocketImpl
-import java.net.DatagramSocketImplFactory
 import java.net.URI
 import java.nio.ByteBuffer
 
-class WebSocketClientService : WebSocketApi.Client {
+class SocketClient constructor(
+    private val address: String
+) : SocketService.Client {
 
     private val coroutineContext = Dispatchers.Default + Job()
     private val coroutineScope = CoroutineScope(coroutineContext)
 
-    private val uri = URI("ws://${WebSocketConfig.DEFAULT_HOST}:${WebSocketConfig.DEFAULT_PORT}")
     private var webSocketClient: WebSocketClient? = null
 
-    private fun createClient() = object : WebSocketClient(uri) {
+    private fun createClient() = object : WebSocketClient(URI(address)) {
         override fun onOpen(handshakedata: ServerHandshake?) {
             println("Connected to server")
         }
 
         override fun onMessage(message: String?) {
-            message?.let {
+            message?.takeIf { it.isSocketMessage }?.let {
                 println("Got message from server: ${it.take(50)}")
-                if (it.isSocketMessage) {
-                    coroutineScope.launch {
-                        messages.send(it.webSocketMessage)
-                    }
+                coroutineScope.launch {
+                    messages.send(it.message)
                 }
             }
         }
 
         override fun onMessage(bytes: ByteBuffer?) {
-            super.onMessage(bytes)
-            bytes?.array()?.toString()?.let {
+            bytes?.array()?.toString()?.takeIf { it.isSocketMessage }?.let {
                 println("Got message from server: ${it.take(50)}")
-                if (it.isSocketMessage) {
-                    coroutineScope.launch {
-                        messages.send(it.webSocketMessage)
-                    }
+                coroutineScope.launch {
+                    messages.send(it.message)
                 }
             }
         }
@@ -55,24 +50,24 @@ class WebSocketClientService : WebSocketApi.Client {
             println("Disconnected from server")
         }
 
-        override fun onError(ex: Exception?) {
-
+        override fun onError(e: Exception?) {
+            println("Client exception: ${e?.localizedMessage ?: "Something went wrong"}")
         }
     }
 
-    override val messages: Channel<WebSocketMessage> = Channel()
+    override val messages: Channel<Message> = Channel()
 
-    override fun signal(message: WebSocketMessage) = runCatching {
+    override fun signal(message: Message) = runCatching {
         webSocketClient?.send(message.toString())
-    }.isSuccess
+    }.fold(onSuccess = { Right(Unit) }, onFailure = { Left(Exception(it)) })
 
     override fun connect() = runCatching {
         webSocketClient = createClient()
         webSocketClient?.connect()
-    }.isSuccess
+    }.fold(onSuccess = { Right(Unit) }, onFailure = { Left(Exception(it)) })
 
     override fun disconnect() = runCatching {
         webSocketClient?.close()
         webSocketClient = null
-    }.isSuccess
+    }.fold(onSuccess = { Right(Unit) }, onFailure = { Left(Exception(it)) })
 }

@@ -4,15 +4,14 @@ import androidx.compose.desktop.LocalAppWindow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import extension.decodeBase64
-import files.ImageFile
+import file.File
 import java.awt.FileDialog
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 @Composable
-fun DownloadZipDialog(imageFiles: List<ImageFile>, onClose: () -> Unit) {
+fun DownloadZipDialog(imageFiles: List<File>, onClose: () -> Unit) {
 
     val (dialogVisibility, setDialogVisibility) = remember {
         mutableStateOf(true)
@@ -29,12 +28,10 @@ fun DownloadZipDialog(imageFiles: List<ImageFile>, onClose: () -> Unit) {
         }) {
         try {
             ZipOutputStream(FileOutputStream(directory + file)).use { zip ->
-                imageFiles.mapIndexed { index, file ->
-                    val name = "${System.currentTimeMillis()}$index.${file.extension}"
+                imageFiles.forEach { target ->
+                    val name = "${target.name}.${target.extension}"
                     zip.putNextEntry(ZipEntry(name))
-                    file.blob.decodeBase64()?.let {
-                        zip.write(it)
-                    }
+                    zip.write(target.bytes)
                 }
             }
         } catch (e: Exception) {

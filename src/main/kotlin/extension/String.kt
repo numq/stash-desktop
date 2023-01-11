@@ -2,19 +2,18 @@ package extension
 
 import org.apache.commons.codec.binary.Base64
 import org.json.JSONObject
-import websocket.WebSocketConstants
-import websocket.WebSocketMessage
+import websocket.Message
 
 val String.isSocketMessage: Boolean
     get() = runCatching {
         with(JSONObject(this)) {
-            has(WebSocketConstants.TYPE) && has(WebSocketConstants.BODY)
+            has(Message.TYPE) && has(Message.BODY)
         }
     }.isSuccess
 
-val String.webSocketMessage: WebSocketMessage
+val String.message: Message
     get() = with(JSONObject(this)) {
-        WebSocketMessage(getString(WebSocketConstants.TYPE), JSONObject(getString(WebSocketConstants.BODY)))
+        Message(getString(Message.TYPE), JSONObject(getString(Message.BODY)))
     }
 
 fun String.decodeBase64(): ByteArray? = try {

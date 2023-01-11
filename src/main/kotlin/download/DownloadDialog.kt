@@ -4,11 +4,12 @@ import androidx.compose.desktop.LocalAppWindow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import file.File
 import java.awt.FileDialog
 import java.io.FileOutputStream
 
 @Composable
-fun DownloadDialog(extension: String, data: ByteArray?, onClose: () -> Unit) {
+fun DownloadDialog(target: File, onClose: () -> Unit) {
 
     val (dialogVisibility, setDialogVisibility) = remember {
         mutableStateOf(true)
@@ -20,14 +21,12 @@ fun DownloadDialog(extension: String, data: ByteArray?, onClose: () -> Unit) {
             "Save file",
             FileDialog.SAVE
         ).apply {
-            file = "${System.currentTimeMillis()}.$extension"
+            file = "${target.name}.${target.extension}"
             isVisible = dialogVisibility
         }) {
         try {
-            data?.let {
-                FileOutputStream(directory + file).use {
-                    it.write(data)
-                }
+            FileOutputStream(directory + file).use {
+                it.write(target.bytes)
             }
         } catch (e: Exception) {
             println(e.localizedMessage)
