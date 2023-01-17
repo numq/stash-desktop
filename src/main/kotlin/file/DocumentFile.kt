@@ -1,7 +1,9 @@
 package file
 
 data class DocumentFile(
-    override val name: String, override val extension: String, override val bytes: ByteArray
+    override val name: String,
+    override val extension: String,
+    override val bytes: ByteArray
 ) : File {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

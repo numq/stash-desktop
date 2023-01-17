@@ -1,7 +1,7 @@
 package websocket
 
-import it.czerwinski.kotlin.util.Either
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.StateFlow
 
 interface SocketService {
     companion object {
@@ -9,14 +9,15 @@ interface SocketService {
     }
 
     interface Client {
+        val connectionState: StateFlow<ConnectionState>
         val messages: Channel<Message>
-        fun signal(message: Message): Either<Exception, Unit>
-        fun connect(): Either<Exception, Unit>
-        fun disconnect(): Either<Exception, Unit>
+        suspend fun signal(message: Message)
+        fun start()
+        fun stop()
     }
 
     interface Server {
-        fun start(): Either<Exception, Unit>
-        fun stop(): Either<Exception, Unit>
+        fun start(onServerStarted: () -> Unit)
+        fun stop()
     }
 }

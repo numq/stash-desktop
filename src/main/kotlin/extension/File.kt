@@ -1,7 +1,6 @@
 package extension
 
-import org.java_websocket.util.Base64
-import java.io.File
+import file.File
 
-val File.base64: String
-    get() = Base64.encodeBytes(readBytes())
+fun File.kindTitle() =
+    if (name.length > 10) "${name.take(5)}...${name.takeLast(5)}.${extension}" else "${name}.${extension}"

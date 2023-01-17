@@ -1,6 +1,10 @@
 package file
 
-data class ImageFile(override val name: String, override val extension: String, override val bytes: ByteArray) : File {
+data class ImageFile(
+    override val name: String,
+    override val extension: String,
+    override val bytes: ByteArray
+) : File {
     companion object {
         val extensions = arrayOf("png", "jpg", "jpeg")
     }

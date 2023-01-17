@@ -3,12 +3,13 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.5.10"
-    id("org.jetbrains.compose") version "0.4.0"
+    kotlin("jvm") version "1.7.10"
+    id("org.jetbrains.compose") version "1.2.0"
 }
 
 group = "com.numq"
 version = "1.0"
+
 
 repositories {
     mavenCentral()
@@ -17,21 +18,24 @@ repositories {
     }
 }
 
-val coroutines = "1.6.2"
-val websocket = "1.5.3"
-val koin = "3.2.0"
-val json = "20220320"
-val util = "1.6.0"
-val codec = "1.9"
+val composeVersion = "1.0.0"
+val coroutinesVersion = "1.6.4"
+val socketVersion = "1.5.3"
+val koinVersion = "3.2.0"
+val jsonVersion = "20220320"
+val utilVersion = "1.6.0"
+val codecVersion = "1.9"
 
 dependencies {
     implementation(compose.desktop.currentOs)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines")
-    implementation("org.java-websocket:Java-WebSocket:$websocket")
-    implementation("io.insert-koin:koin-core:$koin")
-    implementation("it.czerwinski:kotlin-util:$util")
-    implementation("org.json:json:$json")
-    implementation("commons-codec:commons-codec:$codec")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.java-websocket:Java-WebSocket:$socketVersion")
+    implementation("io.insert-koin:koin-core:$koinVersion")
+    implementation("it.czerwinski:kotlin-util:$utilVersion")
+    implementation("org.json:json:$jsonVersion")
+    implementation("commons-codec:commons-codec:$codecVersion")
+    implementation("org.jetbrains.compose.material:material-icons-extended-desktop:$composeVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:$coroutinesVersion")
 }
 
 tasks.withType<KotlinCompile>() {

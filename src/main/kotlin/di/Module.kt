@@ -2,11 +2,15 @@ package di
 
 import config.Configuration
 import file.*
+import folder.FolderRepository
+import folder.FolderViewModel
+import navigation.NavigationViewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import sharing.SharingViewModel
-import sharing.StartSharing
-import sharing.StopSharing
+import folder.GetSharingStatus
+import folder.StartSharing
+import folder.StopSharing
+import transfer.*
 import websocket.SocketClient
 import websocket.SocketServer
 import websocket.SocketService
@@ -25,26 +29,43 @@ val socket = module {
 }
 
 val file = module {
-    single { FileService.Implementation(get()) } bind FileService::class
-    factory { ClearFiles(get()) }
-    factory { StartSharing(get(), get()) }
-    factory { StopSharing(get(), get()) }
-    factory { GetEvents(get()) }
+    single { FileRepository.Implementation(get()) } bind FileRepository::class
+    factory { GetFileEvents(get()) }
     factory { RefreshFiles(get()) }
-    factory { SendFile(get()) }
+    factory { ShareFile(get()) }
+    factory { RemoveFile(get()) }
 }
 
-val sharing = module {
+val folder = module {
+    single { FolderRepository.Implementation(get(), get()) } bind FolderRepository::class
+    factory { GetSharingStatus(get()) }
+    factory { StartSharing(get()) }
+    factory { StopSharing(get()) }
     single {
-        SharingViewModel(
+        FolderViewModel(
             get(),
             get(),
             get(),
             get(),
             get(),
             get(),
+            get(),
+            get()
         )
     }
 }
 
-val appModule = socket + file + sharing
+val transfer = module {
+    single { TransferService.Implementation() } bind TransferService::class
+    factory { GetTransferActions(get()) } bind GetTransferActions::class
+    factory { RequestTransfer(get()) } bind RequestTransfer::class
+    factory { UploadFile(get()) } bind UploadFile::class
+    factory { DownloadFile(get()) } bind DownloadFile::class
+    factory { DownloadZip(get()) } bind DownloadZip::class
+}
+
+val navigation = module {
+    single { NavigationViewModel(get(), get(), get(), get()) }
+}
+
+val appModule = socket + file + folder + transfer + navigation

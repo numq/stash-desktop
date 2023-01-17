@@ -9,21 +9,15 @@ import kotlinx.coroutines.launch
 
 abstract class StateViewModel<T> constructor(initialValue: T) : ViewModel() {
 
-    private val _state: MutableStateFlow<T> = MutableStateFlow(initialValue)
+    private val _state: MutableStateFlow<T> by lazy { MutableStateFlow(initialValue) }
     val state: StateFlow<T> = _state.asStateFlow()
 
     private val _exception: Channel<Exception?> = Channel()
     val exception: Channel<Exception?> = _exception
 
-    val onException: (Exception) -> Unit = { viewModelScope.launch { _exception.send(it) } }
-
-    val initialize: () -> (() -> Unit) -> Unit = { { viewModelScope.launch { it() } } }
+    val onException: (Exception?) -> Unit = { viewModelScope.launch { _exception.send(it) } }
 
     fun updateState(f: (T) -> T) {
         _state.update { f(it) }
-    }
-
-    init {
-        initialize()
     }
 }

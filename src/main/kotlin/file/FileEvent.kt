@@ -2,7 +2,7 @@ package file
 
 sealed class FileEvent private constructor() {
     object Empty : FileEvent()
-    object Clear : FileEvent()
     object Refresh : FileEvent()
-    data class File(val file: file.File) : FileEvent()
+    data class Upload(val file: File) : FileEvent()
+    data class Delete(val file: File) : FileEvent()
 }
