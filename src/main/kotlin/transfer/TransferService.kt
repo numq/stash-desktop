@@ -1,11 +1,11 @@
 package transfer
 
-import extension.toEither
+import extension.catch
+import extension.catchAsync
 import file.File
 import it.czerwinski.kotlin.util.Either
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -19,40 +19,35 @@ interface TransferService {
 
     class Implementation : TransferService {
 
-        override val actions = runCatching {
+        override val actions = catch {
             Channel<TransferAction>(Channel.UNLIMITED)
-        }.toEither()
+        }
 
-        override suspend fun requestTransfer(event: TransferAction) = runCatching {
+        override suspend fun requestTransfer(event: TransferAction) = catch {
             actions.getOrNull()?.trySend(event)?.getOrThrow() ?: Unit
-        }.toEither()
+        }
 
         override suspend fun downloadFile(
             path: String, name: String,
             extension: String,
             bytes: ByteArray
-        ) = runCatching {
-            withContext(Dispatchers.IO) {
-                FileOutputStream("$path$name.$extension").use {
-                    it.write(bytes)
-                }
+        ) = catchAsync(Dispatchers.IO) {
+            FileOutputStream("$path$name.$extension").use {
+                it.write(bytes)
             }
-        }.toEither()
+        }
 
         override suspend fun downloadZip(
             path: String,
             name: String?,
             files: List<File>
-        ) = runCatching {
-            withContext(Dispatchers.IO) {
-                ZipOutputStream(FileOutputStream("$path$name.zip")).use { zip ->
-                    files.forEach { file ->
-                        zip.putNextEntry(ZipEntry("${file.name}.${file.extension}"))
-                        zip.write(file.bytes)
-                    }
+        ) = catchAsync(Dispatchers.IO) {
+            ZipOutputStream(FileOutputStream("$path$name.zip")).use { zip ->
+                files.forEach { file ->
+                    zip.putNextEntry(ZipEntry("${file.name}.${file.extension}"))
+                    zip.write(file.bytes)
                 }
             }
-        }.toEither()
-
+        }
     }
 }

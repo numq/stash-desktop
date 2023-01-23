@@ -1,6 +1,7 @@
 package folder
 
-import extension.toEither
+import extension.catch
+import extension.catchAsync
 import it.czerwinski.kotlin.util.Either
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,7 +19,7 @@ interface FolderRepository {
         private val server: SocketService.Server
     ) : FolderRepository {
 
-        override val sharingState = runCatching {
+        override val sharingState = catch {
             client.connectionState.map {
                 when (it) {
                     ConnectionState.DISCONNECTED -> SharingStatus.OFFLINE
@@ -26,18 +27,17 @@ interface FolderRepository {
                     ConnectionState.CONNECTED -> SharingStatus.SHARING
                 }
             }
-        }.toEither()
+        }
 
-        override suspend fun startSharing() = runCatching {
+        override suspend fun startSharing() = catchAsync {
             server.start {
                 client.start()
             }
-        }.toEither()
+        }
 
-        override suspend fun stopSharing() = runCatching {
+        override suspend fun stopSharing() = catchAsync {
             client.stop()
             server.stop()
-        }.toEither()
-
+        }
     }
 }

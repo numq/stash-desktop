@@ -2,8 +2,56 @@ package extension
 
 import action.CancellableAction
 import it.czerwinski.kotlin.util.Either
+import it.czerwinski.kotlin.util.Left
 import it.czerwinski.kotlin.util.Right
 import it.czerwinski.kotlin.util.flatMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+
+inline fun <reified R> catch(crossinline f: () -> R): Either<Exception, R> =
+    runCatching(f).fold(::Right) {
+        Left(Exception(it))
+    }
+
+inline fun <reified R> catch(
+    condition: Boolean,
+    exception: Exception,
+    crossinline f: () -> R
+): Either<Exception, R> =
+    if (condition) {
+        runCatching(f).fold(::Right) {
+            Left(Exception(it))
+        }
+    } else Left(exception)
+
+suspend inline fun <reified R> catchAsync(
+    coroutineContext: CoroutineContext = Dispatchers.Default,
+    crossinline f: suspend () -> R
+): Either<Exception, R> =
+    runCatching {
+        withContext(coroutineContext) {
+            f()
+        }
+    }.fold(::Right) {
+        Left(Exception(it))
+    }
+
+suspend inline fun <reified R> catchAsync(
+    condition: Boolean,
+    exception: Exception,
+    coroutineContext: CoroutineContext = Dispatchers.Default,
+    crossinline f: suspend () -> R
+): Either<Exception, R> =
+    if (condition) {
+        runCatching {
+            withContext(coroutineContext) {
+                f()
+            }
+        }.fold(::Right) {
+            Left(Exception(it))
+        }
+    } else Left(exception)
 
 fun <L, R> Either<L, R>.action(): Either<L, CancellableAction> =
     Right(CancellableAction.CANCELED).flatMap { this }.map { CancellableAction.COMPLETED }
