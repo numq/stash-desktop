@@ -1,4 +1,3 @@
-import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -25,6 +24,8 @@ val koinVersion = "3.2.0"
 val jsonVersion = "20220320"
 val utilVersion = "1.6.0"
 val codecVersion = "1.9"
+val junitVersion = "1.8.0"
+val mockkVersion = "1.9.1"
 
 dependencies {
     implementation(compose.desktop.currentOs)
@@ -36,6 +37,9 @@ dependencies {
     implementation("commons-codec:commons-codec:$codecVersion")
     implementation("org.jetbrains.compose.material:material-icons-extended-desktop:$composeVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:$coroutinesVersion")
+
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$junitVersion")
+    testImplementation("io.mockk:mockk:$mockkVersion")
 }
 
 tasks.withType<KotlinCompile>() {
