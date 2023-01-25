@@ -1,11 +1,13 @@
 package file
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.sp
 import org.jetbrains.skia.Image
@@ -19,12 +21,13 @@ fun FilePreviewItem(file: File) {
             }.fold(onSuccess = {
                 Image(
                     bitmap = it,
-                    contentDescription = "image"
+                    contentDescription = "image",
+                    modifier = Modifier.fillMaxHeight()
                 )
             }, onFailure = {
                 Icon(Icons.Rounded.Error, "failed to load image")
             })
         }
-        else -> Text(file.extension, fontSize = 128.sp)
+        else -> Text(file.extension, fontSize = 32.sp)
     }
 }

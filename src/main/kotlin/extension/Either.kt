@@ -11,7 +11,7 @@ import kotlin.coroutines.CoroutineContext
 
 inline fun <reified R> catch(crossinline f: () -> R): Either<Exception, R> =
     runCatching(f).fold(::Right) {
-        Left(Exception(it))
+        Left(Exception(it.message, it.cause))
     }
 
 inline fun <reified R> catch(
@@ -21,7 +21,7 @@ inline fun <reified R> catch(
 ): Either<Exception, R> =
     if (condition) {
         runCatching(f).fold(::Right) {
-            Left(Exception(it))
+            Left(Exception(it.message, it.cause))
         }
     } else Left(exception)
 
@@ -29,12 +29,12 @@ suspend inline fun <reified R> catchAsync(
     coroutineContext: CoroutineContext = Dispatchers.Default,
     crossinline f: suspend () -> R
 ): Either<Exception, R> =
-    runCatching {
-        withContext(coroutineContext) {
+    withContext(coroutineContext) {
+        runCatching {
             f()
         }
     }.fold(::Right) {
-        Left(Exception(it))
+        Left(Exception(it.message, it.cause))
     }
 
 suspend inline fun <reified R> catchAsync(
@@ -44,12 +44,12 @@ suspend inline fun <reified R> catchAsync(
     crossinline f: suspend () -> R
 ): Either<Exception, R> =
     if (condition) {
-        runCatching {
-            withContext(coroutineContext) {
+        withContext(coroutineContext) {
+            runCatching {
                 f()
             }
         }.fold(::Right) {
-            Left(Exception(it))
+            Left(Exception(it.message, it.cause))
         }
     } else Left(exception)
 

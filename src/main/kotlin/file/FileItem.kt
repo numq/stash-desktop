@@ -43,7 +43,7 @@ fun FileItem(file: File) {
                             Icon(Icons.Rounded.Error, "failed to load image")
                         })
                     }
-                    else -> Text(file.extension, fontSize = 128.sp)
+                    else -> Text(file.extension, fontSize = 32.sp)
                 }
             }
         }
