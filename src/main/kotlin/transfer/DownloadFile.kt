@@ -12,6 +12,6 @@ class DownloadFile constructor(
 ) : UseCase<Triple<String, String, File>, CancellableAction>() {
     override suspend fun execute(arg: Triple<String, String, File>) =
         Right(arg).flatMap { (path, name, file) ->
-            service.downloadFile(path, name, file.extension, file.bytes).action()
+            service.downloadFile(path, name, file.bytes).action()
         }
 }
