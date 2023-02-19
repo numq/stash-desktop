@@ -1,10 +1,8 @@
 package extension
 
-import action.CancellableAction
 import it.czerwinski.kotlin.util.Either
 import it.czerwinski.kotlin.util.Left
 import it.czerwinski.kotlin.util.Right
-import it.czerwinski.kotlin.util.flatMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -52,6 +50,3 @@ suspend inline fun <reified R> catchAsync(
             Left(Exception(it.message, it.cause))
         }
     } else Left(exception)
-
-fun <L, R> Either<L, R>.action(): Either<L, CancellableAction> =
-    Right(CancellableAction.CANCELED).flatMap { this }.map { CancellableAction.COMPLETED }

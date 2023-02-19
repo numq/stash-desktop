@@ -27,7 +27,7 @@ interface TransferService {
         }
 
         override suspend fun requestTransfer(event: TransferAction) = catch {
-            actions.getOrNull()?.trySend(event)?.getOrThrow() ?: Unit
+            actions.getOrNull()?.trySend(event)?.getOrNull() ?: Unit
         }
 
         override suspend fun downloadFile(
