@@ -29,7 +29,7 @@ fun DownloadDialog(
             isVisible = visibility
         }) {
         try {
-            onDownload(directory, file)
+            onDownload(directory, if (file.endsWith(targetExtension)) file else file.plus(targetExtension))
         } catch (e: Exception) {
             println("Download dialog exception: ${e.localizedMessage}")
         } finally {
