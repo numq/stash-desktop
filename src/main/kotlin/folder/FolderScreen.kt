@@ -20,15 +20,14 @@ import extension.countSuffix
 import extension.kindTitle
 import file.FileItem
 import file.FilePreviewItem
-import kotlinx.coroutines.flow.consumeAsFlow
 import org.koin.java.KoinJavaComponent.inject
 
 @Composable
-fun FolderScreen(onException: (Exception?) -> Unit) {
+fun FolderScreen(onException: (Exception) -> Unit) {
 
     val vm: FolderViewModel by inject(FolderViewModel::class.java)
 
-    onException(vm.exception.consumeAsFlow().collectAsState(null).value)
+    vm.exception.collectAsState(null).value?.let(onException)
 
     val state by vm.state.collectAsState()
 

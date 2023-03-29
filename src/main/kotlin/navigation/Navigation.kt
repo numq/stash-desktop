@@ -11,7 +11,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import error.ShowError
 import folder.FolderScreen
-import kotlinx.coroutines.flow.consumeAsFlow
 import org.koin.java.KoinJavaComponent.inject
 import transfer.DownloadDialog
 import transfer.TransferAction
@@ -24,9 +23,7 @@ fun Navigation() {
 
     val vm: NavigationViewModel by inject(NavigationViewModel::class.java)
 
-    vm.exception.consumeAsFlow().collectAsState(null).value?.let {
-        ShowError(scaffoldState, it)
-    }
+    vm.exception.collectAsState(null).value?.let { ShowError(scaffoldState, it) }
 
     val state by vm.state.collectAsState()
 
