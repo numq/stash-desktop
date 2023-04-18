@@ -1,7 +1,7 @@
 package file
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -22,7 +22,7 @@ fun FilePreviewItem(file: File) {
                 Image(
                     bitmap = it,
                     contentDescription = "image",
-                    modifier = Modifier.fillMaxHeight()
+                    modifier = Modifier.fillMaxSize()
                 )
             }, onFailure = {
                 Icon(Icons.Rounded.Error, "failed to load image")

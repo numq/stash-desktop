@@ -13,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -24,7 +23,7 @@ import extension.kindTitle
 fun FileItem(file: File) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceBetween) {
         Card(Modifier.aspectRatio(1f)) {
-            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Box(Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) {
                 when (file) {
                     is ImageFile -> {
                         runCatching {
@@ -35,9 +34,7 @@ fun FileItem(file: File) {
                                 bitmap = bitmap,
                                 contentDescription = "image",
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .aspectRatio(1f)
-                                    .clipToBounds()
+                                modifier = Modifier.fillMaxSize()
                             )
                         }, onFailure = {
                             Icon(Icons.Rounded.Error, "failed to load image")
