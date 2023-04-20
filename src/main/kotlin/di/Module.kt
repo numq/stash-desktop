@@ -2,14 +2,10 @@ package di
 
 import config.Configuration
 import file.*
-import folder.FolderRepository
-import folder.FolderViewModel
+import folder.*
 import navigation.NavigationViewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import folder.GetSharingStatus
-import folder.StartSharing
-import folder.StopSharing
 import transfer.*
 import websocket.SocketClient
 import websocket.SocketServer

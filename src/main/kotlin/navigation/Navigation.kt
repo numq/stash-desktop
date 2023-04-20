@@ -38,6 +38,16 @@ fun Navigation() {
                 },
                 onCancel = vm::completeAction
             )
+            is TransferAction.DownloadMultipleFiles -> files.forEach { file ->
+                DownloadDialog(
+                    targetName = file.name,
+                    targetExtension = file.extension,
+                    onDownload = { path, name ->
+                        vm.downloadFile(path, name, file)
+                    },
+                    onCancel = vm::completeAction
+                )
+            }
             is TransferAction.DownloadZip -> DownloadDialog(
                 targetName = "${System.currentTimeMillis()}",
                 targetExtension = "zip",

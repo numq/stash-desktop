@@ -23,17 +23,17 @@ interface TransferService {
     class Implementation : TransferService {
 
         override val actions = catch {
-            Channel<TransferAction>(Channel.UNLIMITED)
+            Channel<TransferAction>(Channel.BUFFERED)
         }
 
-        override suspend fun requestTransfer(event: TransferAction) = catch {
-            actions.getOrNull()?.trySend(event)?.getOrNull() ?: Unit
+        override suspend fun requestTransfer(event: TransferAction) = catchAsync {
+            actions.getOrNull()?.trySend(event)?.getOrThrow() ?: Unit
         }
 
         override suspend fun downloadFile(
             path: String,
             name: String,
-            bytes: ByteArray
+            bytes: ByteArray,
         ) = catchAsync(Dispatchers.IO) {
             val uri = "$path/$name"
             val file = Paths.get(uri)
@@ -45,7 +45,7 @@ interface TransferService {
         override suspend fun downloadZip(
             path: String,
             name: String?,
-            files: List<File>
+            files: List<File>,
         ) = catchAsync(Dispatchers.IO) {
             val uri = "$path/$name"
             val file = Paths.get(uri)

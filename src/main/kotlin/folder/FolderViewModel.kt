@@ -14,7 +14,7 @@ class FolderViewModel constructor(
     private val refreshFiles: RefreshFiles,
     private val shareFile: ShareFile,
     private val removeFile: RemoveFile,
-    private val requestTransfer: RequestTransfer
+    private val requestTransfer: RequestTransfer,
 ) : StateViewModel<FolderState>(FolderState()) {
 
     private fun observeSharingStatus() = getSharingStatus.invoke(viewModelScope, Unit, onException) { sharingStatus ->
@@ -74,9 +74,8 @@ class FolderViewModel constructor(
     fun downloadFile(file: File) =
         requestTransfer.invoke(viewModelScope, TransferAction.DownloadFile(file), onException)
 
-    private fun downloadMultipleFiles(files: List<File>) = files.forEach { file ->
-        requestTransfer.invoke(viewModelScope, TransferAction.DownloadFile(file), onException)
-    }
+    private fun downloadMultipleFiles(files: List<File>) =
+        requestTransfer.invoke(viewModelScope, TransferAction.DownloadMultipleFiles(files), onException)
 
     private fun downloadZip(files: List<File>) =
         requestTransfer.invoke(viewModelScope, TransferAction.DownloadZip(files), onException)
@@ -132,8 +131,9 @@ class FolderViewModel constructor(
 
     fun manageSelection(file: File) {
         updateState {
-            if (it.selectedFiles.contains(file)) it.copy(selectedFiles = it.selectedFiles.filterNot { f -> f.name == file.name })
-            else it.copy(selectedFiles = it.selectedFiles.plus(file))
+            if (it.selectedFiles.contains(file)) it.copy(selectedFiles = it.selectedFiles.filterNot { f ->
+                f.bytes.contentEquals(file.bytes)
+            }) else it.copy(selectedFiles = it.selectedFiles.plus(file))
         }
         if (state.value.selectedFiles.isEmpty()) exitSelection()
     }
