@@ -14,8 +14,8 @@ class SocketServer constructor(
 
     private var server: WebSocketServer? = null
 
-    private fun createServer(onServerStarted: () -> Unit) =
-        object : WebSocketServer(InetSocketAddress(hostname, port)) {
+    private fun createServer(onServerStarted: () -> Unit) = InetSocketAddress(hostname, port).run {
+        object : WebSocketServer(if (isUnresolved) InetSocketAddress(hostName, port + 1) else this) {
             override fun onStart() {
                 println("Server started on port: $port")
                 onServerStarted()
@@ -47,6 +47,7 @@ class SocketServer constructor(
                 println("Server exception: ${e?.localizedMessage ?: "Something went wrong"}")
             }
         }
+    }
 
     override fun start(onServerStarted: () -> Unit) {
         if (server != null) stop()

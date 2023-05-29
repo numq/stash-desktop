@@ -10,18 +10,20 @@ import transfer.*
 import websocket.SocketClient
 import websocket.SocketServer
 import websocket.SocketService
+import java.net.InetAddress
 
 val socket = module {
+    val hostname = InetAddress.getLocalHost().hostName
     single {
         SocketClient(
             String.format(
                 SocketService.ADDRESS_PATTERN,
-                Configuration.SOCKET_HOSTNAME,
+                hostname,
                 Configuration.SOCKET_PORT
             )
         )
     } bind SocketService.Client::class
-    single { SocketServer(Configuration.SOCKET_HOSTNAME, Configuration.SOCKET_PORT) } bind SocketService.Server::class
+    single { SocketServer(hostname, Configuration.SOCKET_PORT) } bind SocketService.Server::class
 }
 
 val file = module {
