@@ -13,7 +13,7 @@ import websocket.SocketService
 import java.net.InetAddress
 
 val socket = module {
-    val hostname = InetAddress.getLocalHost().hostName
+    val hostname = InetAddress.getLocalHost().hostAddress
     single {
         SocketClient(
             String.format(

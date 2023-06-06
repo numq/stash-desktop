@@ -1,11 +1,14 @@
 package websocket
 
 import extension.isSocketMessage
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class SocketServer constructor(
     private val hostname: String,
@@ -14,11 +17,11 @@ class SocketServer constructor(
 
     private var server: WebSocketServer? = null
 
-    private fun createServer(onServerStarted: () -> Unit) = InetSocketAddress(hostname, port).run {
-        object : WebSocketServer(if (isUnresolved) InetSocketAddress(hostName, port + 1) else this) {
+    private fun createServer(onSuccess: () -> Unit, onFailure: (Throwable) -> Unit) =
+        object : WebSocketServer(InetSocketAddress(hostname, port)) {
             override fun onStart() {
                 println("Server started on port: $port")
-                onServerStarted()
+                onSuccess()
             }
 
             override fun onOpen(conn: WebSocket?, handshake: ClientHandshake?) {
@@ -45,14 +48,20 @@ class SocketServer constructor(
 
             override fun onError(conn: WebSocket?, e: Exception?) {
                 println("Server exception: ${e?.localizedMessage ?: "Something went wrong"}")
+                e?.cause?.let(onFailure)
             }
         }
-    }
 
-    override fun start(onServerStarted: () -> Unit) {
+    override suspend fun start() = suspendCancellableCoroutine { continuation ->
         if (server != null) stop()
-        server = createServer(onServerStarted)
+        server = createServer(onSuccess = {
+            continuation.resume(true)
+        }, onFailure = continuation::resumeWithException)
         server?.start()
+        continuation.invokeOnCancellation {
+            server?.stop()
+            server = null
+        }
     }
 
     override fun stop() {

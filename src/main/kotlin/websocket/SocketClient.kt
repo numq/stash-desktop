@@ -14,11 +14,10 @@ import java.net.URI
 import java.nio.ByteBuffer
 
 class SocketClient constructor(
-    private val address: String
+    private val address: String,
 ) : SocketService.Client {
 
-    private val coroutineContext = Dispatchers.Default + Job()
-    private val coroutineScope = CoroutineScope(coroutineContext)
+    private var connectionJob: Job? = null
 
     private var client: WebSocketClient? = null
 
@@ -71,17 +70,20 @@ class SocketClient constructor(
         if (client != null) stop()
         _connectionState.update { ConnectionState.CONNECTING }
         client = createClient()
-        coroutineScope.launch {
-            delay(1000)
-            try {
-                client?.connect()
-            } catch (e: Exception) {
-                client?.reconnect()
+        connectionJob = GlobalScope.launch {
+            while (isActive && _connectionState.value != ConnectionState.CONNECTED) {
+                delay(1000L)
+                try {
+                    client?.connect()
+                } catch (e: Exception) {
+                    client?.reconnect()
+                }
             }
         }
     }
 
     override fun stop() {
+        connectionJob?.cancel()
         client?.close(1000)
         client = null
         _connectionState.update { ConnectionState.DISCONNECTED }

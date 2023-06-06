@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import extension.countSuffix
@@ -62,24 +63,35 @@ fun FolderScreen(onException: (Exception) -> Unit) {
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 8.dp),
+                        .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val ActionBox: @Composable (@Composable () -> Unit) -> Unit = { content ->
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            content()
+                        }
+                    }
                     if (selectionMode) {
-                        IconButton(onClick = vm::removeSelectedFiles, enabled = isSharing) {
-                            Icon(Icons.Rounded.DeleteForever, "remove selected files")
+                        ActionBox {
+                            IconButton(onClick = vm::removeSelectedFiles, enabled = isSharing) {
+                                Icon(Icons.Rounded.DeleteForever, "remove selected files")
+                            }
                         }
-                        IconButton(onClick = vm::downloadSelectedFiles) {
-                            Icon(Icons.Rounded.Download, "download selected files")
+                        ActionBox {
+                            IconButton(onClick = vm::downloadSelectedFiles) {
+                                Icon(Icons.Rounded.Download, "download selected files")
+                            }
                         }
-                        IconButton(onClick = vm::downloadSelectedFilesAsZip) {
-                            Row(
-                                Modifier.padding(start = 4.dp, end = 4.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("ZIP", fontWeight = FontWeight.Bold)
+                        ActionBox {
+                            IconButton(onClick = vm::downloadSelectedFilesAsZip) {
+                                Row(
+                                    Modifier.padding(start = 4.dp, end = 4.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("ZIP", fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     } else {
@@ -88,39 +100,58 @@ fun FolderScreen(onException: (Exception) -> Unit) {
                             SharingStatus.CONNECTING -> "Connecting"
                             SharingStatus.SHARING -> "${state.files.count()} file${state.files.countSuffix} found"
                         }
-                        Text(statusText)
-                        IconButton(onClick = vm::refreshFiles, enabled = isSharing) {
-                            Icon(Icons.Rounded.Refresh, "refresh", modifier = Modifier.size(32.dp))
+                        ActionBox {
+                            Text(text = statusText)
                         }
-                        IconButton(onClick = vm::upload, enabled = isSharing) {
-                            Icon(Icons.Rounded.UploadFile, "upload file")
+                        ActionBox {
+                            IconButton(
+                                onClick = vm::refreshFiles,
+                                enabled = isSharing
+                            ) {
+                                Icon(Icons.Rounded.Refresh, "refresh", modifier = Modifier.size(32.dp))
+                            }
                         }
-                        when (state.sharingStatus) {
-                            SharingStatus.SHARING -> {
-                                IconButton(onClick = vm::stopSharing) {
-                                    Icon(Icons.Rounded.CloudOff, "stop sharing", modifier = Modifier.size(32.dp))
-                                }
+                        ActionBox {
+                            IconButton(onClick = vm::upload, enabled = isSharing) {
+                                Icon(Icons.Rounded.UploadFile, "upload file")
                             }
-                            SharingStatus.CONNECTING -> {
-                                val infiniteTransition = rememberInfiniteTransition()
-                                val angle by infiniteTransition.animateFloat(
-                                    initialValue = 0F,
-                                    targetValue = 360F,
-                                    animationSpec = infiniteRepeatable(
-                                        animation = tween(2000, easing = LinearEasing)
-                                    )
-                                )
-                                IconButton(onClick = vm::stopSharing) {
-                                    Icon(
-                                        Icons.Rounded.Sync,
-                                        "connecting",
-                                        modifier = Modifier.size(32.dp).rotate(angle)
-                                    )
+                        }
+                        ActionBox {
+                            when (state.sharingStatus) {
+                                SharingStatus.SHARING -> {
+                                    val hostColor = if (state.isHost) Color.Green else Color.Yellow
+                                    IconButton(onClick = vm::stopSharing) {
+                                        Icon(
+                                            Icons.Rounded.CloudOff,
+                                            "stop sharing",
+                                            modifier = Modifier.size(32.dp),
+                                            tint = hostColor
+                                        )
+                                    }
                                 }
-                            }
-                            SharingStatus.OFFLINE -> {
-                                IconButton(onClick = vm::startSharing) {
-                                    Icon(Icons.Rounded.Cloud, "start sharing", modifier = Modifier.size(32.dp))
+
+                                SharingStatus.CONNECTING -> {
+                                    val infiniteTransition = rememberInfiniteTransition()
+                                    val angle by infiniteTransition.animateFloat(
+                                        initialValue = 0F,
+                                        targetValue = 360F,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(2000, easing = LinearEasing)
+                                        )
+                                    )
+                                    IconButton(onClick = vm::stopSharing) {
+                                        Icon(
+                                            Icons.Rounded.Sync,
+                                            "connecting",
+                                            modifier = Modifier.size(32.dp).rotate(angle)
+                                        )
+                                    }
+                                }
+
+                                SharingStatus.OFFLINE -> {
+                                    IconButton(onClick = vm::startSharing) {
+                                        Icon(Icons.Rounded.Cloud, "start sharing", modifier = Modifier.size(32.dp))
+                                    }
                                 }
                             }
                         }

@@ -4,6 +4,6 @@ import interactor.UseCase
 
 class StartSharing constructor(
     private val repository: FolderRepository
-) : UseCase<Unit, Unit>() {
+) : UseCase<Unit, Boolean>() {
     override suspend fun execute(arg: Unit) = repository.startSharing()
 }

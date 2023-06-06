@@ -11,12 +11,12 @@ import websocket.SocketService
 interface FolderRepository {
 
     val sharingState: Either<Exception, Flow<SharingStatus>>
-    suspend fun startSharing(): Either<Exception, Unit>
+    suspend fun startSharing(): Either<Exception, Boolean>
     suspend fun stopSharing(): Either<Exception, Unit>
 
     class Implementation constructor(
         private val client: SocketService.Client,
-        private val server: SocketService.Server
+        private val server: SocketService.Server,
     ) : FolderRepository {
 
         override val sharingState = catch {
@@ -30,9 +30,8 @@ interface FolderRepository {
         }
 
         override suspend fun startSharing() = catchAsync {
-            server.start {
-                client.start()
-            }
+            client.start()
+            server.start()
         }
 
         override suspend fun stopSharing() = catchAsync {

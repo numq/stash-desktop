@@ -39,6 +39,7 @@ class FolderViewModel constructor(
                             )
                         }
                     }
+
                     is FileEvent.Upload -> {
                         updateState {
                             it.copy(files = listOf(event.file)
@@ -47,11 +48,13 @@ class FolderViewModel constructor(
                             )
                         }
                     }
+
                     is FileEvent.Delete -> {
                         updateState {
                             it.copy(files = it.files.filterNot { f -> f.name == event.file.name })
                         }
                     }
+
                     else -> Unit
                 }
             }
@@ -63,9 +66,13 @@ class FolderViewModel constructor(
         observeSharingStatus()
     }
 
-    fun startSharing() = startSharing.invoke(viewModelScope, Unit, onException)
+    fun startSharing() = startSharing.invoke(viewModelScope, Unit, onException) { isHost ->
+        updateState { it.copy(isHost = isHost) }
+    }
 
-    fun stopSharing() = stopSharing.invoke(viewModelScope, Unit, onException)
+    fun stopSharing() = stopSharing.invoke(viewModelScope, Unit, onException) {
+        updateState { it.copy(isHost = false) }
+    }
 
     fun refreshFiles() = refreshFiles.invoke(viewModelScope, Unit, onException)
 

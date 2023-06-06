@@ -17,7 +17,7 @@ interface SocketService {
     }
 
     interface Server {
-        fun start(onServerStarted: () -> Unit)
+        suspend fun start(): Boolean
         fun stop()
     }
 }
