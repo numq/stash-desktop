@@ -5,6 +5,7 @@ import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 import java.net.Inet4Address
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.nio.ByteBuffer
@@ -69,7 +70,7 @@ class SocketServer : SocketService.Server {
         server = createServer(InetSocketAddress(hostname, SocketService.SERVICE_PORT))
         server?.run {
             if (jmDNS == null) {
-                jmDNS = JmDNS.create().apply {
+                jmDNS = JmDNS.create(InetAddress.getLocalHost(), SocketService.SERVICE_NAME).apply {
                     registerService(serviceInfo)
                 }
             }

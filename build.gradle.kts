@@ -40,6 +40,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:$coroutinesVersion")
     implementation("org.jmdns:jmdns:$jmdnsVersion")
 
+
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$junitVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
 }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
+import java.net.InetAddress
 import java.net.URI
 import java.nio.ByteBuffer
 import javax.jmdns.JmDNS
@@ -88,10 +89,13 @@ class SocketClient : SocketService.Client {
     override fun start() {
         if (client != null) stop()
         _connectionState.update { ConnectionState.CONNECTING }
-        connectionJob = CoroutineScope(Dispatchers.IO).launch {
-            jmDNS = JmDNS.create().apply {
+        connectionJob = CoroutineScope(Dispatchers.Default).launch {
+            jmDNS = JmDNS.create(InetAddress.getLocalHost(), SocketService.SERVICE_NAME).apply {
                 addServiceListener(SocketService.SERVICE_TYPE, dnsListener)
             }
+
+
+
             hostname.filterNotNull().collect {
                 client?.apply { delay(1000L) }?.close()
                 client = null
