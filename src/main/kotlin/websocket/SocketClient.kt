@@ -4,58 +4,77 @@ import extension.isSocketMessage
 import extension.message
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.net.URI
 import java.nio.ByteBuffer
+import javax.jmdns.JmDNS
+import javax.jmdns.ServiceEvent
+import javax.jmdns.ServiceListener
 
-class SocketClient constructor(
-    private val address: String,
-) : SocketService.Client {
+
+class SocketClient : SocketService.Client {
 
     private var connectionJob: Job? = null
-
     private var client: WebSocketClient? = null
+    private var jmDNS: JmDNS? = null
 
-    private fun createClient() = object : WebSocketClient(URI(address)) {
+    private val _hostname = MutableStateFlow<String?>(null)
+    private val hostname: StateFlow<String?> = _hostname
 
-        override fun onOpen(handshakedata: ServerHandshake?) {
-            println("Connected to server")
-            _connectionState.update { ConnectionState.CONNECTED }
+    private val dnsListener = object : ServiceListener {
+        override fun serviceAdded(event: ServiceEvent) {
+            println("Service added")
         }
 
-        override fun onMessage(message: String?) {
-            message?.takeIf { it.isSocketMessage }?.let {
-                println("Got message from server: ${it.take(50)}")
-                messages.trySend(it.message)
+        override fun serviceRemoved(event: ServiceEvent) {
+            println("Service removed")
+        }
+
+        override fun serviceResolved(event: ServiceEvent) {
+            println("Service resolved")
+            if (event.name == SocketService.SERVICE_NAME && event.type == SocketService.SERVICE_TYPE) {
+                _hostname.update { event.info.getPropertyString("hostname") }
             }
-        }
-
-        override fun onMessage(bytes: ByteBuffer?) {
-            bytes?.array()?.toString()?.takeIf { it.isSocketMessage }?.let {
-                println("Got message from server: ${it.take(50)}")
-                messages.trySend(it.message)
-            }
-        }
-
-        override fun onClose(code: Int, reason: String?, remote: Boolean) {
-            _connectionState.update { ConnectionState.DISCONNECTED }
-            println("Disconnected from server")
-            if (code != 1000) start()
-        }
-
-        override fun onError(e: Exception?) {
-            println("Client exception: ${e?.localizedMessage ?: "Socket error"}")
-        }
-
-        override fun reconnect() {
-            println("Client reconnecting")
         }
     }
+
+    private fun createClient(hostname: String) =
+        object : WebSocketClient(URI(SocketService.ADDRESS_PATTERN.format(hostname, SocketService.SERVICE_PORT))) {
+            override fun onOpen(handshakedata: ServerHandshake?) {
+                println("Connected to server")
+                _connectionState.update { ConnectionState.CONNECTED }
+            }
+
+            override fun onMessage(message: String?) {
+                message?.takeIf { it.isSocketMessage }?.let {
+                    println("Got message from server: ${it.take(50)}")
+                    messages.trySend(it.message)
+                }
+            }
+
+            override fun onMessage(bytes: ByteBuffer?) {
+                bytes?.array()?.toString()?.takeIf { it.isSocketMessage }?.let {
+                    println("Got message from server: ${it.take(50)}")
+                    messages.trySend(it.message)
+                }
+            }
+
+            override fun onClose(code: Int, reason: String?, remote: Boolean) {
+                _connectionState.update { ConnectionState.DISCONNECTED }
+                println("Disconnected from server")
+                if (code != 1000) start()
+            }
+
+            override fun onError(e: Exception?) {
+                println("Client exception: ${e?.localizedMessage ?: "Socket error"}")
+            }
+
+            override fun reconnect() {
+                println("Client reconnecting")
+            }
+        }
 
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
     override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
@@ -69,15 +88,17 @@ class SocketClient constructor(
     override fun start() {
         if (client != null) stop()
         _connectionState.update { ConnectionState.CONNECTING }
-        client = createClient()
-        connectionJob = GlobalScope.launch {
-            while (isActive && _connectionState.value != ConnectionState.CONNECTED) {
-                delay(1000L)
-                try {
-                    client?.connect()
-                } catch (e: Exception) {
-                    client?.reconnect()
+        connectionJob = CoroutineScope(Dispatchers.IO).launch {
+            jmDNS = JmDNS.create().apply {
+                addServiceListener(SocketService.SERVICE_TYPE, dnsListener)
+            }
+            hostname.filterNotNull().collect {
+                client?.apply { delay(1000L) }?.close()
+                client = null
+                client = createClient(it).apply {
+                    connect()
                 }
+                return@collect
             }
         }
     }
@@ -85,7 +106,6 @@ class SocketClient constructor(
     override fun stop() {
         connectionJob?.cancel()
         client?.close(1000)
-        client = null
         _connectionState.update { ConnectionState.DISCONNECTED }
     }
 }

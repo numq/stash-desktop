@@ -1,27 +1,39 @@
 package websocket
 
 import extension.isSocketMessage
-import kotlinx.coroutines.suspendCancellableCoroutine
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
+import java.net.Inet4Address
 import java.net.InetSocketAddress
+import java.net.NetworkInterface
 import java.nio.ByteBuffer
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import javax.jmdns.JmDNS
+import javax.jmdns.ServiceInfo
 
-class SocketServer constructor(
-    private val hostname: String,
-    private val port: Int,
-) : SocketService.Server {
+class SocketServer : SocketService.Server {
 
     private var server: WebSocketServer? = null
+    private var jmDNS: JmDNS? = null
 
-    private fun createServer(onSuccess: () -> Unit, onFailure: (Throwable) -> Unit) =
-        object : WebSocketServer(InetSocketAddress(hostname, port)) {
+    private val hostname = NetworkInterface.getNetworkInterfaces().toList().flatMap { networkInterface ->
+        networkInterface.inetAddresses.toList()
+    }.firstOrNull { !it.isLoopbackAddress }?.hostAddress ?: Inet4Address.getLocalHost().hostAddress
+
+    private val serviceInfo = ServiceInfo.create(
+        SocketService.SERVICE_TYPE,
+        SocketService.SERVICE_NAME,
+        SocketService.SERVICE_PORT,
+        1,
+        1,
+        false,
+        mapOf("hostname" to hostname)
+    )
+
+    private fun createServer(address: InetSocketAddress) = runCatching {
+        object : WebSocketServer(address) {
             override fun onStart() {
                 println("Server started on port: $port")
-                onSuccess()
             }
 
             override fun onOpen(conn: WebSocket?, handshake: ClientHandshake?) {
@@ -48,20 +60,22 @@ class SocketServer constructor(
 
             override fun onError(conn: WebSocket?, e: Exception?) {
                 println("Server exception: ${e?.localizedMessage ?: "Something went wrong"}")
-                e?.cause?.let(onFailure)
             }
         }
+    }.getOrNull()
 
-    override suspend fun start() = suspendCancellableCoroutine { continuation ->
+    override suspend fun start(): Boolean {
         if (server != null) stop()
-        server = createServer(onSuccess = {
-            continuation.resume(true)
-        }, onFailure = continuation::resumeWithException)
-        server?.start()
-        continuation.invokeOnCancellation {
-            server?.stop()
-            server = null
+        server = createServer(InetSocketAddress(hostname, SocketService.SERVICE_PORT))
+        server?.run {
+            if (jmDNS == null) {
+                jmDNS = JmDNS.create().apply {
+                    registerService(serviceInfo)
+                }
+            }
+            start()
         }
+        return server != null
     }
 
     override fun stop() {

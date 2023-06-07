@@ -24,6 +24,7 @@ val koinVersion = "3.2.0"
 val jsonVersion = "20220320"
 val utilVersion = "1.6.0"
 val codecVersion = "1.9"
+val jmdnsVersion = "3.5.1"
 val junitVersion = "1.8.0"
 val mockkVersion = "1.9.1"
 
@@ -37,6 +38,7 @@ dependencies {
     implementation("commons-codec:commons-codec:$codecVersion")
     implementation("org.jetbrains.compose.material:material-icons-extended-desktop:$composeVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:$coroutinesVersion")
+    implementation("org.jmdns:jmdns:$jmdnsVersion")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$junitVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")

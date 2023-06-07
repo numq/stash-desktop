@@ -1,6 +1,5 @@
 package di
 
-import config.Configuration
 import file.*
 import folder.*
 import navigation.NavigationViewModel
@@ -10,20 +9,10 @@ import transfer.*
 import websocket.SocketClient
 import websocket.SocketServer
 import websocket.SocketService
-import java.net.InetAddress
 
 val socket = module {
-    val hostname = InetAddress.getLocalHost().hostAddress
-    single {
-        SocketClient(
-            String.format(
-                SocketService.ADDRESS_PATTERN,
-                hostname,
-                Configuration.SOCKET_PORT
-            )
-        )
-    } bind SocketService.Client::class
-    single { SocketServer(hostname, Configuration.SOCKET_PORT) } bind SocketService.Server::class
+    single { SocketClient() } bind SocketService.Client::class
+    single { SocketServer() } bind SocketService.Server::class
 }
 
 val file = module {
