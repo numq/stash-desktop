@@ -1,5 +1,7 @@
 package websocket
 
-enum class ConnectionState {
-    DISCONNECTED, CONNECTING, CONNECTED
+sealed class ConnectionState private constructor() {
+    object Disconnected : ConnectionState()
+    object Connecting : ConnectionState()
+    data class Connected(val isHost: Boolean, val address: SocketAddress) : ConnectionState()
 }

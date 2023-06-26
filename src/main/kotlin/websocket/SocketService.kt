@@ -5,22 +5,22 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface SocketService {
     companion object {
-        const val SERVICE_NAME = "stash"
-        const val SERVICE_TYPE = "_ws._tcp."
-        const val SERVICE_PORT = 9000
-        const val ADDRESS_PATTERN = "ws://%s:%s"
+        const val REGEX_PATTERN = "(ws{1,2}):\\/\\/(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{1,5})"
+        const val DEFAULT_HOSTNAME = "127.0.0.1"
+        const val DEFAULT_PORT = 9000
     }
 
     interface Client {
         val connectionState: StateFlow<ConnectionState>
         val messages: Channel<Message>
         suspend fun signal(message: Message)
-        fun start()
+        suspend fun startWithString(address: String?)
+        suspend fun startWithAddress(address: SocketAddress)
         fun stop()
     }
 
     interface Server {
-        suspend fun start(): Boolean
+        suspend fun start(): SocketAddress?
         fun stop()
     }
 }

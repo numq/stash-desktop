@@ -1,4 +1,4 @@
-package folder
+package folder.container
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box

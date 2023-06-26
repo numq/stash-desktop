@@ -1,6 +1,9 @@
 package folder
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,13 +21,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import extension.countSuffix
-import extension.kindTitle
 import file.FileItem
-import file.FilePreviewItem
+import folder.container.InteractionContainer
+import folder.container.SelectionContainer
+import notification.Notification
 import org.koin.java.KoinJavaComponent.inject
 
 @Composable
-fun FolderScreen(onException: (Exception) -> Unit) {
+fun FolderScreen(showNotification: (Notification) -> Unit, onException: (Exception) -> Unit) {
 
     val vm: FolderViewModel by inject(FolderViewModel::class.java)
 
@@ -32,125 +36,131 @@ fun FolderScreen(onException: (Exception) -> Unit) {
 
     val state by vm.state.collectAsState()
 
-    val isSharing = state.sharingStatus == SharingStatus.SHARING
+    val isSharing = state.sharingStatus is SharingStatus.Sharing
 
     val selectionMode = state.selectedFiles.isNotEmpty()
 
-    Scaffold(floatingActionButton = {
-        if (selectionMode) Row(
-            Modifier.padding(4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Card {
+    Scaffold(
+        floatingActionButton = {
+            AnimatedVisibility(selectionMode) {
                 Row(
                     Modifier.padding(4.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = vm::exitSelection) {
-                        Icon(Icons.Rounded.Cancel, "exit selection")
-                    }
-                    IconButton(onClick = vm::selectAll) {
-                        Icon(Icons.Rounded.DoneAll, "select all")
-                    }
-                }
-            }
-        }
-    }, floatingActionButtonPosition = FabPosition.Center, bottomBar = {
-        if (state.previewFile == null) {
-            BottomAppBar {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val ActionBox: @Composable (@Composable () -> Unit) -> Unit = { content ->
-                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                            content()
+                    Card {
+                        Row(
+                            Modifier.padding(4.dp),
+                            horizontalArrangement = Arrangement.SpaceAround,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = vm::exitSelection) {
+                                Icon(Icons.Rounded.Cancel, "exit selection")
+                            }
+                            IconButton(onClick = vm::selectAll) {
+                                Icon(Icons.Rounded.DoneAll, "select all")
+                            }
                         }
                     }
-                    if (selectionMode) {
-                        ActionBox {
-                            IconButton(onClick = vm::removeSelectedFiles, enabled = isSharing) {
-                                Icon(Icons.Rounded.DeleteForever, "remove selected files")
+                }
+            }
+        }, floatingActionButtonPosition = FabPosition.Center, bottomBar = {
+            BoxWithConstraints {
+                val animatedOffset by animateDpAsState(if (state.previewFile == null) 0.dp else maxHeight)
+                BottomAppBar(Modifier.offset(y = animatedOffset)) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val ActionBox: @Composable (@Composable () -> Unit) -> Unit = { content ->
+                            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                content()
                             }
                         }
-                        ActionBox {
-                            IconButton(onClick = vm::downloadSelectedFiles) {
-                                Icon(Icons.Rounded.Download, "download selected files")
+                        if (selectionMode) {
+                            ActionBox {
+                                IconButton(onClick = vm::removeSelectedFiles, enabled = isSharing) {
+                                    Icon(Icons.Rounded.DeleteForever, "remove selected files")
+                                }
                             }
-                        }
-                        ActionBox {
-                            IconButton(onClick = vm::downloadSelectedFilesAsZip) {
-                                Row(
-                                    Modifier.padding(start = 4.dp, end = 4.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
+                            ActionBox {
+                                IconButton(onClick = vm::downloadSelectedFiles) {
+                                    Icon(Icons.Rounded.Download, "download selected files")
+                                }
+                            }
+                            ActionBox {
+                                IconButton(onClick = vm::downloadSelectedFilesAsZip) {
+                                    Row(
+                                        Modifier.padding(start = 4.dp, end = 4.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("ZIP", fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        } else {
+                            val statusText = when (state.sharingStatus) {
+                                is SharingStatus.Offline -> "Offline"
+                                is SharingStatus.Connecting -> "Connecting"
+                                is SharingStatus.Sharing -> "${state.files.count()} file${state.files.countSuffix} found"
+                            }
+                            ActionBox {
+                                Text(text = statusText)
+                            }
+                            ActionBox {
+                                IconButton(
+                                    onClick = vm::refreshFiles, enabled = isSharing
                                 ) {
-                                    Text("ZIP", fontWeight = FontWeight.Bold)
+                                    Icon(Icons.Rounded.Refresh, "refresh", modifier = Modifier.size(32.dp))
                                 }
                             }
-                        }
-                    } else {
-                        val statusText = when (state.sharingStatus) {
-                            SharingStatus.OFFLINE -> "Offline"
-                            SharingStatus.CONNECTING -> "Connecting"
-                            SharingStatus.SHARING -> "${state.files.count()} file${state.files.countSuffix} found"
-                        }
-                        ActionBox {
-                            Text(text = statusText)
-                        }
-                        ActionBox {
-                            IconButton(
-                                onClick = vm::refreshFiles,
-                                enabled = isSharing
-                            ) {
-                                Icon(Icons.Rounded.Refresh, "refresh", modifier = Modifier.size(32.dp))
+                            ActionBox {
+                                IconButton(onClick = vm::upload, enabled = isSharing) {
+                                    Icon(Icons.Rounded.UploadFile, "upload file")
+                                }
                             }
-                        }
-                        ActionBox {
-                            IconButton(onClick = vm::upload, enabled = isSharing) {
-                                Icon(Icons.Rounded.UploadFile, "upload file")
-                            }
-                        }
-                        ActionBox {
-                            when (state.sharingStatus) {
-                                SharingStatus.SHARING -> {
-                                    val hostColor = if (state.isHost) Color.Green else Color.Yellow
-                                    IconButton(onClick = vm::stopSharing) {
-                                        Icon(
-                                            Icons.Rounded.CloudOff,
-                                            "stop sharing",
-                                            modifier = Modifier.size(32.dp),
-                                            tint = hostColor
-                                        )
+                            ActionBox {
+                                when (state.sharingStatus) {
+                                    is SharingStatus.Sharing -> {
+                                        val hostColor =
+                                            if ((state.sharingStatus as SharingStatus.Sharing).isHost) Color.Green else Color.Yellow
+                                        button.IconButton(
+                                            onClick = if (state.networkInfoVisible) vm::closeNetworkInfo else vm::stopSharing,
+                                            onLongClick = vm::openNetworkInfo
+                                        ) {
+                                            Icon(
+                                                Icons.Rounded.CloudOff,
+                                                "stop sharing",
+                                                modifier = Modifier.size(32.dp),
+                                                tint = hostColor
+                                            )
+                                        }
                                     }
-                                }
 
-                                SharingStatus.CONNECTING -> {
-                                    val infiniteTransition = rememberInfiniteTransition()
-                                    val angle by infiniteTransition.animateFloat(
-                                        initialValue = 0F,
-                                        targetValue = 360F,
-                                        animationSpec = infiniteRepeatable(
-                                            animation = tween(2000, easing = LinearEasing)
+                                    is SharingStatus.Connecting -> {
+                                        val infiniteTransition = rememberInfiniteTransition()
+                                        val angle by infiniteTransition.animateFloat(
+                                            initialValue = 0F, targetValue = 360F, animationSpec = infiniteRepeatable(
+                                                animation = tween(2000, easing = LinearEasing)
+                                            )
                                         )
-                                    )
-                                    IconButton(onClick = vm::stopSharing) {
-                                        Icon(
-                                            Icons.Rounded.Sync,
-                                            "connecting",
-                                            modifier = Modifier.size(32.dp).rotate(angle)
-                                        )
+                                        IconButton(onClick = vm::stopSharing) {
+                                            Icon(
+                                                Icons.Rounded.Sync,
+                                                "connecting",
+                                                modifier = Modifier.size(32.dp).rotate(angle)
+                                            )
+                                        }
                                     }
-                                }
 
-                                SharingStatus.OFFLINE -> {
-                                    IconButton(onClick = vm::startSharing) {
-                                        Icon(Icons.Rounded.Cloud, "start sharing", modifier = Modifier.size(32.dp))
+                                    is SharingStatus.Offline -> {
+                                        button.IconButton(onClick = vm::startSharing, onLongClick = {
+                                            if (!state.configurationVisible) vm.openConfiguration()
+                                        }) {
+                                            Icon(Icons.Rounded.Cloud, "start sharing", modifier = Modifier.size(32.dp))
+                                        }
                                     }
                                 }
                             }
@@ -158,110 +168,83 @@ fun FolderScreen(onException: (Exception) -> Unit) {
                     }
                 }
             }
-        }
-    }) { paddingValues ->
-        Column(
+        }) { paddingValues ->
+        Box(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            contentAlignment = Alignment.BottomCenter
         ) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 contentPadding = PaddingValues(8.dp),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(state.files, key = { it.name }) { file ->
                     if (selectionMode) {
                         SelectionContainer(
-                            file,
-                            state.selectedFiles.any { it.name == file.name },
-                            vm::manageSelection,
-                            vm::manageSelection
+                            file = file,
+                            isSelected = state.selectedFiles.any { it.name == file.name },
+                            onClick = vm::manageSelection,
+                            onLongClick = vm::manageSelection
                         ) {
                             FileItem(file)
                         }
                     } else {
                         InteractionContainer(
-                            file,
-                            isSharing,
-                            vm::openFile,
-                            vm::enterSelection,
-                            vm::removeFile,
-                            vm::downloadFile
+                            file = file,
+                            isSharing = isSharing,
+                            onClick = vm::openFile,
+                            onLongClick = vm::enterSelection,
+                            onRemove = vm::removeFile,
+                            onSave = vm::downloadFile
                         ) {
                             FileItem(file)
                         }
                     }
                 }
             }
+            when (state.sharingStatus) {
+                is SharingStatus.Offline -> {
+                    AnimatedVisibility(
+                        state.configurationVisible,
+                        enter = slideInVertically { it },
+                        exit = slideOutVertically { it }
+                    ) {
+                        ConfigurationInput { address ->
+                            address?.let(vm::updateConfiguration) ?: vm.cancelConfiguration()
+                        }
+                    }
+                }
+
+                is SharingStatus.Sharing -> {
+                    AnimatedVisibility(
+                        state.networkInfoVisible,
+                        enter = slideInVertically { it },
+                        exit = slideOutVertically { it }
+                    ) {
+                        val status = state.sharingStatus as SharingStatus.Sharing
+                        NetworkInfo(status.address, status.qrCodePixels, showNotification, vm::closeNetworkInfo)
+                    }
+                }
+
+                else -> Unit
+            }
         }
         state.previewFile?.let { file ->
-            Scaffold(topBar = {
-                TopAppBar {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            Modifier.padding(4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(onClick = vm::closeFile) {
-                                Icon(Icons.Rounded.KeyboardReturn, "close file")
-                            }
-                            Text(file.kindTitle())
-                        }
-                        Row(
-                            Modifier.padding(4.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(onClick = {
-                                vm.removeFile(file)
-                            }, enabled = isSharing) {
-                                Icon(Icons.Rounded.DeleteForever, "remove file")
-                            }
-                            IconButton(onClick = {
-                                vm.downloadFile(file)
-                            }) {
-                                Icon(Icons.Rounded.Save, "download file")
-                            }
-                        }
-                    }
-                }
-            }, floatingActionButtonPosition = FabPosition.Center, floatingActionButton = {
-                Row(
-                    Modifier.padding(4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Filter ${file.extension.uppercase()}")
-                    Checkbox(state.filteredByExtension, onCheckedChange = { vm.filterByExtension() })
-                }
-            }) { paddingValues ->
-                Row(
-                    Modifier.fillMaxSize().padding(start = 8.dp, end = 8.dp).padding(paddingValues),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = {
-                        vm.previousFile(file)
-                    }, enabled = state.files.size > 1) {
-                        Icon(Icons.Rounded.ArrowBack, "previous file")
-                    }
-                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        FilePreviewItem(file)
-                    }
-                    IconButton(onClick = {
-                        vm.nextFile(file)
-                    }, enabled = state.files.size > 1) {
-                        Icon(Icons.Rounded.ArrowForward, "next file")
-                    }
-                }
+            AnimatedVisibility(true) {
+                PreviewFile(
+                    file = file,
+                    isSharing = state.sharingStatus is SharingStatus.Sharing,
+                    controlsVisible = state.files.size > 1,
+                    filteredByExtension = state.filteredByExtension,
+                    filterByExtension = vm::filterByExtension,
+                    previousFile = vm::previousFile,
+                    nextFile = vm::nextFile,
+                    downloadFile = vm::downloadFile,
+                    removeFile = vm::removeFile,
+                    closeFile = vm::closeFile
+                )
             }
         }
     }

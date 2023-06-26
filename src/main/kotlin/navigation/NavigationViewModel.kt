@@ -3,6 +3,7 @@ package navigation
 import file.File
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
+import notification.Notification
 import transfer.DownloadFile
 import transfer.DownloadZip
 import transfer.GetTransferActions
@@ -13,7 +14,7 @@ class NavigationViewModel constructor(
     private val getTransferActions: GetTransferActions,
     private val uploadFile: UploadFile,
     private val downloadFile: DownloadFile,
-    private val downloadZip: DownloadZip
+    private val downloadZip: DownloadZip,
 ) : StateViewModel<NavigationState>(NavigationState(Destination.Folder)) {
 
     private fun observeTransferEvents() {
@@ -30,12 +31,11 @@ class NavigationViewModel constructor(
         observeTransferEvents()
     }
 
-    fun uploadFiles(files: List<Triple<String, String, ByteArray>>) =
-        viewModelScope.launch {
-            files.forEach { (name, extension, bytes) ->
-                uploadFile.invoke(viewModelScope, Triple(name, extension, bytes), onException)
-            }
+    fun uploadFiles(files: List<Triple<String, String, ByteArray>>) = viewModelScope.launch {
+        files.forEach { (name, extension, bytes) ->
+            uploadFile.invoke(viewModelScope, Triple(name, extension, bytes), onException)
         }
+    }
 
     fun downloadFile(path: String, name: String, file: File) =
         downloadFile.invoke(viewModelScope, Triple(path, name, file), onException)
@@ -45,4 +45,11 @@ class NavigationViewModel constructor(
 
     fun completeAction() = updateState { it.copy(action = null) }
 
+    fun showNotification(notification: Notification) = updateState {
+        it.copy(notifications = it.notifications.plusElement(notification))
+    }
+
+    fun hideNotification(notification: Notification) = updateState {
+        it.copy(notifications = it.notifications.minusElement(notification))
+    }
 }

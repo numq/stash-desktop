@@ -5,6 +5,7 @@ import extension.catchAsync
 import file.File
 import it.czerwinski.kotlin.util.Either
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import java.nio.file.Paths
 import java.util.zip.ZipEntry
@@ -34,7 +35,7 @@ interface TransferService {
             path: String,
             name: String,
             bytes: ByteArray,
-        ) = catchAsync(Dispatchers.IO) {
+        ) = catchAsync(Dispatchers.IO + Job()) {
             val uri = "$path/$name"
             val file = Paths.get(uri)
             file.writeBytes(bytes)
@@ -46,7 +47,7 @@ interface TransferService {
             path: String,
             name: String?,
             files: List<File>,
-        ) = catchAsync(Dispatchers.IO) {
+        ) = catchAsync(Dispatchers.IO + Job()) {
             val uri = "$path/$name"
             val file = Paths.get(uri)
             file.outputStream().use {

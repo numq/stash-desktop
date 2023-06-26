@@ -20,7 +20,7 @@ class FolderViewModel constructor(
     private fun observeSharingStatus() = getSharingStatus.invoke(viewModelScope, Unit, onException) { sharingStatus ->
         viewModelScope.launch {
             sharingStatus.collect { sharingState ->
-                if (sharingState == SharingStatus.SHARING) refreshFiles()
+                if (sharingState is SharingStatus.Sharing) refreshFiles()
                 updateState { it.copy(sharingStatus = sharingState) }
             }
         }
@@ -66,13 +66,9 @@ class FolderViewModel constructor(
         observeSharingStatus()
     }
 
-    fun startSharing() = startSharing.invoke(viewModelScope, Unit, onException) { isHost ->
-        updateState { it.copy(isHost = isHost) }
-    }
+    fun startSharing(address: String? = null) = startSharing.invoke(viewModelScope, address, onException)
 
-    fun stopSharing() = stopSharing.invoke(viewModelScope, Unit, onException) {
-        updateState { it.copy(isHost = false) }
-    }
+    fun stopSharing() = stopSharing.invoke(viewModelScope, Unit, onException)
 
     fun refreshFiles() = refreshFiles.invoke(viewModelScope, Unit, onException)
 
@@ -169,4 +165,24 @@ class FolderViewModel constructor(
         }
     }
 
+    fun openNetworkInfo() {
+        updateState { it.copy(networkInfoVisible = true) }
+    }
+
+    fun closeNetworkInfo() {
+        updateState { it.copy(networkInfoVisible = false) }
+    }
+
+    fun openConfiguration() {
+        updateState { it.copy(configurationVisible = true) }
+    }
+
+    fun updateConfiguration(address: String) {
+        updateState { it.copy(configurationVisible = false) }
+        startSharing(address)
+    }
+
+    fun cancelConfiguration() {
+        updateState { it.copy(configurationVisible = false) }
+    }
 }

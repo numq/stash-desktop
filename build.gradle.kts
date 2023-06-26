@@ -24,23 +24,21 @@ val koinVersion = "3.2.0"
 val jsonVersion = "20220320"
 val utilVersion = "1.6.0"
 val codecVersion = "1.9"
-val jmdnsVersion = "3.5.1"
+val zxingVersion = "3.5.1"
 val junitVersion = "1.8.0"
 val mockkVersion = "1.9.1"
 
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:$coroutinesVersion")
     implementation("org.java-websocket:Java-WebSocket:$socketVersion")
     implementation("io.insert-koin:koin-core:$koinVersion")
     implementation("it.czerwinski:kotlin-util:$utilVersion")
     implementation("org.json:json:$jsonVersion")
     implementation("commons-codec:commons-codec:$codecVersion")
     implementation("org.jetbrains.compose.material:material-icons-extended-desktop:$composeVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:$coroutinesVersion")
-    implementation("org.jmdns:jmdns:$jmdnsVersion")
-
-
+    implementation("com.google.zxing:core:$zxingVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$junitVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
 }
