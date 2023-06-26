@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import extension.fullTitle
 import file.File
-import file.FilePreviewItem
+import file.FileItemPreview
 
 @Composable
 fun PreviewFile(
@@ -81,7 +81,7 @@ fun PreviewFile(
                 Icon(Icons.Rounded.ArrowBack, "previous file")
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                FilePreviewItem(file)
+                FileItemPreview(file)
             }
             IconButton(onClick = {
                 nextFile(file)

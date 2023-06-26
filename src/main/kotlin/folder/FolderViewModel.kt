@@ -8,7 +8,8 @@ import viewmodel.StateViewModel
 
 class FolderViewModel constructor(
     private val getSharingStatus: GetSharingStatus,
-    private val startSharing: StartSharing,
+    private val startClient: StartClient,
+    private val startServer: StartServer,
     private val stopSharing: StopSharing,
     private val getFileEvents: GetFileEvents,
     private val refreshFiles: RefreshFiles,
@@ -66,7 +67,19 @@ class FolderViewModel constructor(
         observeSharingStatus()
     }
 
-    fun startSharing(address: String? = null) = startSharing.invoke(viewModelScope, address, onException)
+    fun startServer(port: Int? = null) {
+        updateState { it.copy(configurationVisible = false) }
+        startServer.invoke(viewModelScope, port, onException) {
+            updateState { it.copy(wasTheHost = true, lastUsedPort = port) }
+        }
+    }
+
+    fun startClient(address: String? = null) {
+        updateState { it.copy(configurationVisible = false) }
+        startClient.invoke(viewModelScope, address, onException) {
+            updateState { it.copy(wasTheHost = false, lastUsedAddress = address) }
+        }
+    }
 
     fun stopSharing() = stopSharing.invoke(viewModelScope, Unit, onException)
 
@@ -175,11 +188,6 @@ class FolderViewModel constructor(
 
     fun openConfiguration() {
         updateState { it.copy(configurationVisible = true) }
-    }
-
-    fun updateConfiguration(address: String) {
-        updateState { it.copy(configurationVisible = false) }
-        startSharing(address)
     }
 
     fun cancelConfiguration() {

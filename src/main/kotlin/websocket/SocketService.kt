@@ -14,13 +14,13 @@ interface SocketService {
         val connectionState: StateFlow<ConnectionState>
         val messages: Channel<Message>
         suspend fun signal(message: Message)
-        suspend fun startWithString(address: String?)
-        suspend fun startWithAddress(address: SocketAddress)
+        fun startWithString(address: String?)
+        fun startWithAddress(address: SocketAddress)
         fun stop()
     }
 
     interface Server {
-        suspend fun start(): SocketAddress?
+        suspend fun start(port: Int?): SocketAddress?
         fun stop()
     }
 }

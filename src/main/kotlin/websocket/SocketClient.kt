@@ -41,9 +41,9 @@ class SocketClient : SocketService.Client {
             }
 
             override fun onClose(code: Int, reason: String?, remote: Boolean) {
-                if (code != 1000) connect()
                 println("Disconnected from server")
                 _connectionState.update { ConnectionState.Disconnected }
+                if (code != 1000) startWithAddress(address)
             }
 
             override fun onError(e: Exception?) {
@@ -64,7 +64,8 @@ class SocketClient : SocketService.Client {
         client?.run { if (isOpen) send(message.toString()) }
     }
 
-    private fun connect(address: SocketAddress, callback: () -> Unit) {
+    private fun connectToClient(address: SocketAddress, callback: () -> Unit = {}) {
+        if (client != null) stop()
         _connectionState.update { ConnectionState.Connecting }
         connectionJob = CoroutineScope(Dispatchers.Default + Job()).launch {
             client = createClient(address) { callback() }
@@ -73,7 +74,7 @@ class SocketClient : SocketService.Client {
         }
     }
 
-    override suspend fun startWithString(address: String?) {
+    override fun startWithString(address: String?) {
         val socketAddress = address?.let { addr ->
             Regex(SocketService.REGEX_PATTERN)
                 .matchEntire(addr)
@@ -87,13 +88,13 @@ class SocketClient : SocketService.Client {
                 }
                 ?.getOrNull()
         } ?: SocketAddress()
-        connect(socketAddress) {
+        connectToClient(socketAddress) {
             _connectionState.update { ConnectionState.Connected(false, socketAddress) }
         }
     }
 
-    override suspend fun startWithAddress(address: SocketAddress) {
-        connect(address) {
+    override fun startWithAddress(address: SocketAddress) {
+        connectToClient(address) {
             _connectionState.update { ConnectionState.Connected(true, address) }
         }
     }
@@ -101,6 +102,7 @@ class SocketClient : SocketService.Client {
     override fun stop() {
         connectionJob?.cancel()
         client?.close(1000)
+        client = null
         _connectionState.update { ConnectionState.Disconnected }
     }
 }

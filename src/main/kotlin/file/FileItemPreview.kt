@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.skia.Image
 
 @Composable
-fun FilePreviewItem(file: File) {
+fun FileItemPreview(file: File) {
     when (file) {
         is ImageFile -> {
             runCatching {

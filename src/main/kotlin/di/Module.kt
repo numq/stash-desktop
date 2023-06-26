@@ -26,10 +26,12 @@ val file = module {
 val folder = module {
     single { FolderRepository.Implementation(get(), get()) } bind FolderRepository::class
     factory { GetSharingStatus(get()) }
-    factory { StartSharing(get()) }
+    factory { StartClient(get()) }
+    factory { StartServer(get()) }
     factory { StopSharing(get()) }
     single {
         FolderViewModel(
+            get(),
             get(),
             get(),
             get(),

@@ -60,6 +60,7 @@ fun NetworkInfo(
                 Modifier.clickable(onClick = {
                     clipboardManager.setText(AnnotatedString(address))
                     showNotification(Notification.Short("Copied to clipboard"))
+                    close()
                 }).padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically

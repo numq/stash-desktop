@@ -12,7 +12,8 @@ import websocket.SocketService
 interface FolderRepository {
 
     val sharingState: Either<Exception, Flow<SharingStatus>>
-    suspend fun startSharing(address: String?): Either<Exception, Unit>
+    suspend fun startServer(port: Int?): Either<Exception, Unit>
+    suspend fun startClient(address: String?): Either<Exception, Unit>
     suspend fun stopSharing(): Either<Exception, Unit>
 
     class Implementation constructor(
@@ -29,17 +30,19 @@ interface FolderRepository {
                         val address = connection.address.toString()
                         val qrCodePixels = runCatching { QRGenerator.generate(address) }.getOrNull()
                         SharingStatus.Sharing(
-                            connection.isHost,
-                            qrCodePixels,
-                            address
+                            connection.isHost, qrCodePixels, address
                         )
                     }
                 }
             }
         }
 
-        override suspend fun startSharing(address: String?) = catchAsync {
-            server.start()?.let { client.startWithAddress(it) } ?: client.startWithString(address)
+        override suspend fun startServer(port: Int?) = catchAsync {
+            server.start(port)?.let { client.startWithAddress(it) } ?: throw Exception("Unable to launch server")
+        }
+
+        override suspend fun startClient(address: String?) = catchAsync {
+            client.startWithString(address)
         }
 
         override suspend fun stopSharing() = catchAsync {
