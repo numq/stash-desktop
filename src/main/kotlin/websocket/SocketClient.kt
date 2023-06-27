@@ -12,6 +12,7 @@ import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.net.URI
 import java.nio.ByteBuffer
+import java.util.concurrent.TimeUnit
 
 
 class SocketClient : SocketService.Client {
@@ -42,8 +43,8 @@ class SocketClient : SocketService.Client {
 
             override fun onClose(code: Int, reason: String?, remote: Boolean) {
                 println("Disconnected from server")
-                _connectionState.update { ConnectionState.Disconnected }
-                if (code != 1000) startWithAddress(address)
+                if (code != 1000) reconnect()
+                else _connectionState.update { ConnectionState.Disconnected }
             }
 
             override fun onError(e: Exception?) {
@@ -52,6 +53,7 @@ class SocketClient : SocketService.Client {
 
             override fun reconnect() {
                 println("Client reconnecting")
+                startWithAddress(address)
             }
         }
 
@@ -65,12 +67,15 @@ class SocketClient : SocketService.Client {
     }
 
     private fun connectToClient(address: SocketAddress, callback: () -> Unit = {}) {
-        if (client != null) stop()
+        if (client != null) {
+            client?.close(1000)
+            client = null
+        }
         _connectionState.update { ConnectionState.Connecting }
         connectionJob = CoroutineScope(Dispatchers.Default + Job()).launch {
-            client = createClient(address) { callback() }
             delay(1000L)
-            client?.connect()
+            client = createClient(address, callback)
+            client?.connectBlocking(5000, TimeUnit.MILLISECONDS)
         }
     }
 

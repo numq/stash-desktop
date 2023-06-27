@@ -52,10 +52,6 @@ fun ConfigurationInput(
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose(close)
-    }
-
     Box(
         Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomEnd
@@ -107,7 +103,7 @@ fun ConfigurationInput(
                         portInput,
                         setPortInput,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        placeholder = { Text("Type server port number in range $minPort - $maxPort.") },
+                        placeholder = { Text("Choose port in range: $minPort - $maxPort, default is ${SocketService.DEFAULT_PORT}") },
                         isError = portInput.isNotEmpty() && !isValidPort,
                         trailingIcon = {
                             Row(

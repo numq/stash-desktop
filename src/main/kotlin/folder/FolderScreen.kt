@@ -156,9 +156,10 @@ fun FolderScreen(showNotification: (Notification) -> Unit, onException: (Excepti
 
                                 is SharingStatus.Offline -> {
                                     button.IconButton(onClick = {
-                                        (state.wasTheHost ?: false).let {
-                                            if (it) vm.startServer(state.lastUsedPort) else vm.startClient(state.lastUsedAddress)
-                                        }
+                                        if (state.configurationVisible) vm.cancelConfiguration()
+                                        else state.wasTheHost?.takeIf { it }?.let {
+                                            vm.startServer(state.lastUsedPort)
+                                        } ?: vm.startClient(state.lastUsedAddress)
                                     }, onLongClick = {
                                         if (!state.configurationVisible) vm.openConfiguration()
                                     }) {
@@ -220,7 +221,8 @@ fun FolderScreen(showNotification: (Notification) -> Unit, onException: (Excepti
                             },
                             configureServer = { port ->
                                 port?.let(vm::startServer) ?: vm.cancelConfiguration()
-                            })
+                            }
+                        )
                     }
                 }
 
