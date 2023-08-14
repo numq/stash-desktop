@@ -1,4 +1,4 @@
-package folder
+package folder.configuration
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,13 +20,24 @@ fun ConfigurationInput(
     wasTheHost: Boolean?,
     lastUsedPort: Int?,
     lastUsedAddress: String?,
+    onActiveTab: (ConfigurationTab?) -> Unit,
     configureClient: (String?) -> Unit,
     configureServer: (Int?) -> Unit,
 ) {
 
-    val tabs = arrayOf("Client", "Server")
+    DisposableEffect(Unit) {
+        onDispose { onActiveTab(null) }
+    }
 
-    val (selectedTabIndex, setSelectedTabIndex) = remember { mutableStateOf(wasTheHost?.let { if (it) 1 else 0 } ?: 0) }
+    val tabs = ConfigurationTab.values()
+
+    val (selectedTab, setSelectedTab) = remember {
+        mutableStateOf(
+            wasTheHost?.let {
+                if (it) ConfigurationTab.SERVER else ConfigurationTab.CLIENT
+            } ?: ConfigurationTab.CLIENT
+        )
+    }
 
     val minPort = 1024
     val maxPort = 49151
@@ -46,9 +57,9 @@ fun ConfigurationInput(
     }
 
     val close = {
-        when (selectedTabIndex) {
-            0 -> configureClient(addressInput.takeIf { isValidAddress })
-            1 -> configureServer(portInput.takeIf { isValidPort }?.toIntOrNull())
+        when (selectedTab) {
+            ConfigurationTab.CLIENT -> configureClient(addressInput.takeIf { isValidAddress })
+            ConfigurationTab.SERVER -> configureServer(portInput.takeIf { isValidPort }?.toIntOrNull())
         }
     }
 
@@ -61,16 +72,19 @@ fun ConfigurationInput(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            TabRow(selectedTabIndex) {
-                tabs.forEachIndexed { index, tab ->
+            TabRow(selectedTab.ordinal) {
+                tabs.forEach { tab ->
                     Tab(
-                        text = { Text(tab) },
-                        selected = selectedTabIndex == index,
-                        onClick = { setSelectedTabIndex(index) })
+                        text = { Text(tab.name.lowercase().replaceFirstChar { it.uppercaseChar() }) },
+                        selected = selectedTab == tab,
+                        onClick = {
+                            onActiveTab(tab)
+                            setSelectedTab(tab)
+                        })
                 }
             }
-            when (selectedTabIndex) {
-                0 -> {
+            when (selectedTab) {
+                ConfigurationTab.CLIENT -> {
                     TextField(
                         addressInput,
                         setAddressInput,
@@ -98,7 +112,7 @@ fun ConfigurationInput(
                     )
                 }
 
-                1 -> {
+                ConfigurationTab.SERVER -> {
                     TextField(
                         portInput,
                         setPortInput,
