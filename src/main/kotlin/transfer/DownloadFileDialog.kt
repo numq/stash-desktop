@@ -11,7 +11,7 @@ fun DownloadDialog(
     targetName: String,
     targetExtension: String,
     onDownload: (String, String) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
 
     val (visibility, setVisibility) = remember {
@@ -29,7 +29,7 @@ fun DownloadDialog(
             isVisible = visibility
         }) {
         try {
-            onDownload(directory, if (file.endsWith(targetExtension)) file else file.plus(targetExtension))
+            onDownload(directory, if (file.endsWith(targetExtension)) file else file.plus(".$targetExtension"))
         } catch (e: Exception) {
             println("Download dialog exception: ${e.localizedMessage}")
         } finally {

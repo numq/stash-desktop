@@ -20,10 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import extension.countSuffix
 import file.FileItem
+import folder.configuration.ConfigurationInput
+import folder.configuration.ConfigurationTab
 import folder.container.InteractionContainer
 import folder.container.SelectionContainer
 import notification.Notification
 import org.koin.java.KoinJavaComponent.inject
+import websocket.SocketService
 
 @Composable
 fun FolderScreen(showNotification: (Notification) -> Unit, onException: (Exception) -> Unit) {
@@ -45,6 +48,8 @@ fun FolderScreen(showNotification: (Notification) -> Unit, onException: (Excepti
             state.selectedFiles.isNotEmpty()
         }
     }
+
+    val (activeConfigurationTab, setActiveConfigurationTab) = remember { mutableStateOf<ConfigurationTab?>(null) }
 
     Scaffold(floatingActionButton = {
         if (selectionMode) AnimatedVisibility(true) {
@@ -162,8 +167,11 @@ fun FolderScreen(showNotification: (Notification) -> Unit, onException: (Excepti
 
                                 is SharingStatus.Offline -> {
                                     button.IconButton(onClick = {
-                                        if (state.configurationVisible) vm.cancelConfiguration()
-                                        else state.wasTheHost?.takeIf { it }?.let {
+                                        if (state.configurationVisible) {
+                                            if (activeConfigurationTab == ConfigurationTab.SERVER) {
+                                                vm.startServer(SocketService.DEFAULT_PORT)
+                                            } else vm.cancelConfiguration()
+                                        } else state.wasTheHost?.takeIf { it }?.let {
                                             vm.startServer(state.lastUsedPort)
                                         } ?: vm.startClient(state.lastUsedAddress)
                                     }, onLongClick = {
@@ -222,6 +230,9 @@ fun FolderScreen(showNotification: (Notification) -> Unit, onException: (Excepti
                             state.wasTheHost,
                             state.lastUsedPort,
                             state.lastUsedAddress,
+                            onActiveTab = { tab ->
+                                setActiveConfigurationTab(tab)
+                            },
                             configureClient = { address ->
                                 address?.let(vm::startClient) ?: vm.cancelConfiguration()
                             },
